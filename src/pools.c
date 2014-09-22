@@ -28,31 +28,31 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pools.h"
 
 int Pools_init( struct Pools *self,
-                int const pool_item_sizes[POOLS_NUM_POOLS],
-                int const pool_num_items[POOLS_NUM_POOLS],
                 void *( *low_level_allocation_function )( int ),
                 void ( *low_level_free_function )( void * ) )
 {
     int r = -1;
-    int i;
     self->low_level_allocation_function = low_level_allocation_function;
     self->low_level_free_function = low_level_free_function;
     self->diag_num_frees_from_heap = 0;
     self->diag_num_spills_handled = 0;
     self->diag_num_spills_to_heap = 0;
+    self->num_pools = 0;
+    r = 0;
+    return r;
+}
 
-    for ( i = 0; i < POOLS_NUM_POOLS; ++i )
+int Pools_add( struct Pools *self, int element_size, int number_of_elements )
+{
+    int r = -1;
+    if ( self->num_pools < POOLS_MAX_POOLS )
     {
+        struct Pool *pool = &self->pool[self->num_pools];
         r = Pool_init(
-            &self->pool[i], pool_num_items[i], pool_item_sizes[i], low_level_allocation_function, low_level_free_function );
-        if ( r == -1 )
+            pool, number_of_elements, element_size, self->low_level_allocation_function, self->low_level_free_function );
+        if ( r == 0 )
         {
-            int n;
-            for ( n = 0; n < i; ++n )
-            {
-                Pool_terminate( &self->pool[n] );
-            }
-            break;
+            ++self->num_pools;
         }
     }
     return r;
@@ -61,7 +61,7 @@ int Pools_init( struct Pools *self,
 void Pools_terminate( struct Pools *self )
 {
     int n;
-    for ( n = 0; n < POOLS_NUM_POOLS; ++n )
+    for ( n = 0; n < self->num_pools; ++n )
     {
         Pool_terminate( &self->pool[n] );
     }
@@ -73,7 +73,7 @@ void *Pools_allocate_element( struct Pools *self, int size )
 {
     void *r = 0;
     int i;
-    for ( i = 0; i < POOLS_NUM_POOLS; ++i )
+    for ( i = 0; i < self->num_pools; ++i )
     {
         if ( size < self->pool[i].element_size )
         {
@@ -102,7 +102,7 @@ void Pools_deallocate_element( struct Pools *self, void *p )
     int deallocated = 0;
     if ( p )
     {
-        for ( i = 0; i < POOLS_NUM_POOLS; ++i )
+        for ( i = 0; i < self->num_pools; ++i )
         {
             if ( Pool_is_address_in_pool( &self->pool[i], p ) )
             {
@@ -124,7 +124,7 @@ void Pools_diagnostics( struct Pools *self, FILE *f, const char *prefix )
 {
     int i;
     int total_items_still_allocated = 0;
-    for ( i = 0; i < POOLS_NUM_POOLS; ++i )
+    for ( i = 0; i < self->num_pools; ++i )
     {
         char newprefix[128];
         sprintf( newprefix, "%s:%2d:[%6d]:", prefix, i, self->pool[i].element_size );

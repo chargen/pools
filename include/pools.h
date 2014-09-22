@@ -29,14 +29,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "pool.h"
 
-#define POOLS_NUM_POOLS ( 16 )
+#define POOLS_MAX_POOLS ( 16 )
 
 struct Pools
 {
     /**
+     * @brief num_pools The current number of pools
+     */
+    int num_pools;
+
+    /**
      * @brief pool The array of pools.
      */
-    struct Pool pool[POOLS_NUM_POOLS];
+    struct Pool pool[POOLS_MAX_POOLS];
 
     /**
      * @brief low_level_allocation_function the pointer to the system's low level allocation function
@@ -67,21 +72,28 @@ struct Pools
 };
 
 /**
- * @brief Pools_init                Initialize a Pools structure, a set of POOLS_MAX_POOLS pools
- * @param self                      Pointer to Pools struct to init
- * @param pool_item_sizes           Pointer to array of integers specifying the size of the elements for each pool
- * @param pool_num_items            Pointer to array of integers specifying the number of elements for each pool
- * @return                          -1 on error, 0 on success
+ * @brief Pools_init                    Initialize a Pools structure, a set of POOLS_MAX_POOLS pools
+ * @param self                          Pointer to Pools struct to init
+ * @param low_level_allocation_function Pointer to low level memory allocation function
+ * @param low_level_free_function       Pointer to low level memory free function
+ * @return                              -1 on error, 0 on success
  */
 int Pools_init( struct Pools *self,
-                int const pool_item_sizes[POOLS_NUM_POOLS],
-                int const pool_num_items[POOLS_NUM_POOLS],
                 void *( *low_level_allocation_function )( int ),
                 void ( *low_level_free_function )( void * ) );
 
 /**
- * @brief Pools_terminate           Terminate a Pools and deallocate low level buffers used by all pools except the spills onto
- * the heap.
+ * @brief Pools_add                     Add a pool to a set of Pools
+ * @param self                          Pointer to Pools struct to add a pool to
+ * @param element_size                  The size of the element for this new pool
+ * @param num_elements                  The number of elements for this new pool
+ * @return                              -1 on error, 0 on success
+ */
+int Pools_add( struct Pools *self, int element_size, int number_of_elements );
+
+/**
+ * @brief Pools_terminate           Terminate a Pools and deallocate low level buffers used by all
+ *                                  pools except the spills onto the heap.
  * @param self                      Pointer to the Pools to terminate
  */
 void Pools_terminate( struct Pools *self );

@@ -121,11 +121,13 @@ struct Pool
 };
 
 /**
- * @brief Pool_init                 Initialize a Pool
- * @param self                      Pointer to Pool struct to initialize
- * @param num_elements              The number of elements to allocate. May be 0 to disable Pool.
- * @param element_size              The size of each element in bytes.May be 0 to disable Pool.
- * @return                          -1 on error, 0 on success
+ * @brief Pool_init                     Initialize a Pool
+ * @param self                          Pointer to Pool struct to initialize
+ * @param num_elements                  The number of elements to allocate. May be 0 to disable Pool.
+ * @param element_size                  The size of each element in bytes.May be 0 to disable Pool.
+ * @param low_level_allocation_function Pointer to low level memory allocation function
+ * @param low_level_free_function       Pointer to low level memory free function
+ * @return                              -1 on error, 0 on success
  */
 int Pool_init( struct Pool *self,
                int num_elements,

@@ -29,10 +29,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pools.h"
 
 struct Pools my_pools;
-int my_pool_num_items[POOLS_NUM_POOLS] = {1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 1, 1, 1, 1, 1};
-
-int my_pool_item_sizes[POOLS_NUM_POOLS]
-    = {4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072};
 
 void *my_low_level_allocation( int sz )
 {
@@ -53,7 +49,7 @@ void exercise_pool()
 
     for ( i = 0; i < max_ptrs; ++i )
     {
-        int sz = random() % 512;
+        int sz = random() % 7000;
         ptrs[i] = Pools_allocate_element( &my_pools, sz );
     }
 
@@ -74,10 +70,41 @@ void exercise_pool()
 int main()
 {
     int r = 255;
-    if ( Pools_init( &my_pools, my_pool_item_sizes, my_pool_num_items, my_low_level_allocation, my_low_level_free ) == 0 )
+    if ( Pools_init( &my_pools, my_low_level_allocation, my_low_level_free ) == 0 )
     {
         r = 0;
-
+        if ( Pools_add( &my_pools, 64, 1024 ) )
+        {
+            POOL_ABORT( "alloc" );
+        }
+        if ( Pools_add( &my_pools, 128, 1024 ) )
+        {
+            POOL_ABORT( "alloc" );
+        }
+        if ( Pools_add( &my_pools, 256, 1024 ) )
+        {
+            POOL_ABORT( "alloc" );
+        }
+        if ( Pools_add( &my_pools, 512, 1024 ) )
+        {
+            POOL_ABORT( "alloc" );
+        }
+        if ( Pools_add( &my_pools, 1024, 1024 ) )
+        {
+            POOL_ABORT( "alloc" );
+        }
+        if ( Pools_add( &my_pools, 2048, 1024 ) )
+        {
+            POOL_ABORT( "alloc" );
+        }
+        if ( Pools_add( &my_pools, 4096, 1024 ) )
+        {
+            POOL_ABORT( "alloc" );
+        }
+        if ( Pools_add( &my_pools, 8192, 1024 ) )
+        {
+            POOL_ABORT( "alloc" );
+        }
         exercise_pool();
 
         Pools_terminate( &my_pools );
