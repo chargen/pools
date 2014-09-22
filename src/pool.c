@@ -35,7 +35,7 @@ int Pool_init( struct Pool *self,
 {
     int r = -1;
     /* one bit per element */
-    int size_of_allocated_flags_in_bytes = num_elements / 8 + 1;
+    int size_of_allocated_flags_in_bytes = ( num_elements + 7 ) / 8;
     memset( self, 0, sizeof( *self ) );
     self->element_size = element_size;
     self->num_elements = num_elements;
@@ -68,6 +68,10 @@ int Pool_init( struct Pool *self,
             }
         }
     }
+    else
+    {
+        r = 0;
+    }
     return r;
 }
 
@@ -81,48 +85,67 @@ void Pool_terminate( struct Pool *self )
     {
         self->low_level_free_function( self->allocated_flags );
     }
+    memset( self, 0, sizeof( *self ) );
 }
 
 void *Pool_allocate_element( struct Pool *self )
 {
     void *r = 0;
-    int item = -1;
-    item = Pool_find_next_available_element( self );
+    if ( self->num_elements > 0 )
+    {
+        int item = -1;
+        item = Pool_find_next_available_element( self );
 
-    if ( item != -1 )
-    {
-        Pool_mark_element_allocated( self, item );
-        r = Pool_get_address_for_element( self, item );
-        ++self->diag_num_allocations;
-    }
-    else
-    {
-        ++self->diag_num_spills;
+        if ( item != -1 )
+        {
+            Pool_mark_element_allocated( self, item );
+            r = Pool_get_address_for_element( self, item );
+            ++self->diag_num_allocations;
+        }
+        else
+        {
+            ++self->diag_num_spills;
+        }
     }
     return r;
 }
 
 int Pool_deallocate_element( struct Pool *self, void *p )
 {
-    int item = Pool_get_element_for_address( self, p );
-    if ( item >= 0 )
+    if ( self->num_elements > 0 )
     {
-        Pool_mark_element_available( self, item );
-        ++self->diag_num_frees;
+        int item = Pool_get_element_for_address( self, p );
+        if ( item >= 0 )
+        {
+            Pool_mark_element_available( self, item );
+            ++self->diag_num_frees;
+        }
+        return item;
     }
-    return item;
+    else
+    {
+        return -1;
+    }
 }
 
 int Pool_is_element_available( struct Pool *self, int element_num )
 {
-    int r = 1;
-    int element_div_8 = element_num / 8;
-    int element_mod_8 = element_num & 7;
-    unsigned char bit = ( 1 << element_mod_8 );
-
-    if ( ( self->allocated_flags[element_div_8] & bit ) != 0 )
+    int r = 0;
+    if ( element_num < self->num_elements )
     {
-        r = 0;
+        int element_div_8 = element_num / 8;
+        int element_mod_8 = element_num & 7;
+        unsigned char bit = ( 1 << element_mod_8 );
+        unsigned char flags = self->allocated_flags[element_div_8];
+
+        if ( ( flags & bit ) == 0 )
+        {
+            r = 1;
+        }
+    }
+    else
+    {
+        POOL_ABORT( "is_element_available given invalid element_num" );
     }
     return r;
 }
@@ -189,7 +212,7 @@ int Pool_is_address_in_pool( struct Pool *self, void const *p )
 
     if ( base <= pp && pp < top )
     {
-        int offset = pp - base;
+        int offset = (int)( pp - base );
         if ( ( offset % self->element_size ) == 0 )
         {
             r = 1;
@@ -206,7 +229,7 @@ int Pool_get_element_for_address( struct Pool *self, void const *p )
     int r = -1;
     if ( base <= pp && pp < top )
     {
-        int offset = pp - base;
+        int offset = (int)( pp - base );
         if ( ( offset % self->element_size ) == 0 )
         {
             r = offset / self->element_size;
@@ -228,7 +251,7 @@ int Pool_find_next_available_element( struct Pool *self )
                 int item = ( pos + i ) % self->num_elements;
                 if ( Pool_is_element_available( self, item ) )
                 {
-                    r = pos;
+                    r = item;
                     self->next_available_hint = item;
                     break;
                 }
@@ -246,9 +269,19 @@ int Pool_find_next_available_element( struct Pool *self )
 
 void Pool_diagnostics( struct Pool *self, FILE *f, const char *prefix )
 {
+    int actual_allocated_items = 0;
+    int i;
+    for ( i = 0; i < self->num_elements; ++i )
+    {
+        if ( !Pool_is_element_available( self, i ) )
+        {
+            actual_allocated_items++;
+        }
+    }
     fprintf( f, "%selement_size                     : %d\n", prefix, self->element_size );
     fprintf( f, "%snum_elements                     : %d\n", prefix, self->num_elements );
     fprintf( f, "%stotal_allocated_items            : %d\n", prefix, self->total_allocated_items );
+    fprintf( f, "%sactual_allocated_items           : %d\n", prefix, actual_allocated_items );
     fprintf( f, "%sdiag_multiple_allocation_errors  : %d\n", prefix, self->diag_multiple_allocation_errors );
     fprintf( f, "%sdiag_multiple_deallocation_errors: %d\n", prefix, self->diag_multiple_deallocation_errors );
     fprintf( f, "%sdiag_num_allocations             : %d\n", prefix, self->diag_num_allocations );

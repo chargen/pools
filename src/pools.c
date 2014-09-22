@@ -65,6 +65,8 @@ void Pools_terminate( struct Pools *self )
     {
         Pool_terminate( &self->pool[n] );
     }
+    self->low_level_allocation_function = 0;
+    self->low_level_free_function = 0;
 }
 
 void *Pools_allocate_element( struct Pools *self, int size )
@@ -86,7 +88,7 @@ void *Pools_allocate_element( struct Pools *self, int size )
             }
         }
     }
-    if ( r == 0 )
+    if ( r == 0 && self->low_level_allocation_function )
     {
         ++self->diag_num_spills_to_heap;
         r = self->low_level_allocation_function( size );
@@ -109,7 +111,7 @@ void Pools_deallocate_element( struct Pools *self, void *p )
                 break;
             }
         }
-        if ( !deallocated )
+        if ( !deallocated && self->low_level_free_function )
         {
             ++self->diag_num_frees_from_heap;
             self->low_level_free_function( p );
