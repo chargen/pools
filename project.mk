@@ -1,16 +1,16 @@
-PROJECT=jdks
-PROJECT_NAME=jdks
-PROJECT_VERSION=20140914
+PROJECT=pools
+PROJECT_NAME=pools
+PROJECT_VERSION=20140921
 PROJECT_EMAIL=jeffk@jdkoftinoff.com
 PROJECT_LICENSE=BSD
 PROJECT_MAINTAINER=jeffk@jdkoftinoff.com
 PROJECT_COPYRIGHT=Copyright 2014
-PROJECT_DESCRIPTION=jdks
-PROJECT_WEBSITE=https://github.com/jdkoftinoff/jdks
-PROJECT_IDENTIFIER=com.jdkoftinoff.jdks
+PROJECT_DESCRIPTION=pools
+PROJECT_WEBSITE=https://github.com/jdkoftinoff/pools
+PROJECT_IDENTIFIER=com.jdkoftinoff.pools
 TOP_LIB_DIRS+=.
 CONFIG_TOOLS+=
 PKGCONFIG_PACKAGES+=
 
-CXXFLAGS+=-std=c++11 -stdlib=libc++
+CXXFLAGS+=
 
