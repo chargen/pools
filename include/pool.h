@@ -31,10 +31,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <stdio.h>
 
-#if defined( POOL_ABORT_ON_ERROR ) && !defined( POOL_ABORT )
+#if !defined( POOL_NO_ABORT_ON_ERROR ) && !defined( POOL_ABORT )
 #define POOL_ABORT( msg )                                                                                                      \
     do                                                                                                                         \
-    { fprintf(stderr,"%s", msg, abort();                                                                                       \
+    {                                                                                                                          \
+        fprintf( stderr, "%s", msg );                                                                                          \
+        abort();                                                                                                               \
     } while ( 0 )
 #else
 #define POOL_ABORT( msg )                                                                                                      \
@@ -132,7 +134,7 @@ int Pool_init( struct Pool *self,
                void ( *low_level_free_function )( void * ) );
 
 /**
- * @brief Pool_terminat             Terminate a Pool and dealloate low level buffers
+ * @brief Pool_terminate            Terminate a Pool and deallocate low level buffers
  * @param self                      Pointer to the Pool to terminate
  */
 void Pool_terminate( struct Pool *self );
@@ -200,7 +202,7 @@ int Pool_is_address_in_pool( struct Pool *self, void const *p );
 int Pool_get_element_for_address( struct Pool *self, void const *p );
 int Pool_find_next_available_element( struct Pool *self );
 
-#ifdef stdout
+#if defined( stdout ) && !defined( POOL_DISABLE_DIAGNOSTICS )
 /**
  * @brief Pool_diagnostics          Print pool diagnostics counters
  * @param self                      Pointer to Pool struct to diagnose

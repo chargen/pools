@@ -37,8 +37,6 @@ int Pool_init( struct Pool *self,
     /* one bit per element */
     int size_of_allocated_flags_in_bytes = num_elements / 8 + 1;
     memset( self, 0, sizeof( *self ) );
-    self->low_level_allocation_function = low_level_allocation_function;
-    self->low_level_free_function = low_level_free_function;
     self->element_size = element_size;
     self->num_elements = num_elements;
     self->next_available_hint = 0;
@@ -49,21 +47,24 @@ int Pool_init( struct Pool *self,
     self->diag_multiple_allocation_errors = 0;
     self->diag_multiple_deallocation_errors = 0;
     self->element_storage_size = num_elements * element_size;
+    self->low_level_allocation_function = low_level_allocation_function;
+    self->low_level_free_function = low_level_free_function;
 
     if ( self->element_storage_size > 0 )
     {
-        self->allocated_flags = (unsigned char *)self->low_level_allocation_function( size_of_allocated_flags_in_bytes );
+        self->allocated_flags = (unsigned char *)low_level_allocation_function( size_of_allocated_flags_in_bytes );
         if ( self->allocated_flags )
         {
             memset( self->allocated_flags, 0, size_of_allocated_flags_in_bytes );
-            self->element_storage = (unsigned char *)self->low_level_allocation_function( self->element_storage_size );
-            if ( self->element_size )
+            self->element_storage = (unsigned char *)low_level_allocation_function( self->element_storage_size );
+            if ( self->element_storage )
             {
+                memset( self->element_storage, 0, self->element_storage_size );
                 r = 0;
             }
             else
             {
-                self->low_level_free_function( self->allocated_flags );
+                low_level_free_function( self->allocated_flags );
             }
         }
     }
@@ -118,9 +119,8 @@ int Pool_is_element_available( struct Pool *self, int element_num )
     int element_div_8 = element_num / 8;
     int element_mod_8 = element_num & 7;
     unsigned char bit = ( 1 << element_mod_8 );
-    unsigned char mask_bit = ~bit;
 
-    if ( ( self->allocated_flags[element_div_8] & mask_bit ) != 0 )
+    if ( ( self->allocated_flags[element_div_8] & bit ) != 0 )
     {
         r = 0;
     }
@@ -132,16 +132,16 @@ void Pool_mark_element_allocated( struct Pool *self, int element_num )
     int element_div_8 = element_num / 8;
     int element_mod_8 = element_num & 7;
     unsigned char bit = ( 1 << element_mod_8 );
-    unsigned char mask_bit = ~bit;
+    unsigned char flags = self->allocated_flags[element_div_8];
 
-    if ( ( self->allocated_flags[element_div_8] & mask_bit ) != 0 )
+    if ( ( flags & bit ) == bit )
     {
         self->diag_multiple_allocation_errors++;
         POOL_ABORT( "Multiple allocation" );
     }
     else
     {
-        self->allocated_flags[element_div_8] |= element_mod_8;
+        self->allocated_flags[element_div_8] = flags | bit;
         ++self->total_allocated_items;
         self->next_available_hint = ( self->next_available_hint + 1 ) % self->num_elements;
     }
@@ -153,15 +153,16 @@ void Pool_mark_element_available( struct Pool *self, int element_num )
     int element_mod_8 = element_num & 7;
     unsigned char bit = ( 1 << element_mod_8 );
     unsigned char mask_bit = ~bit;
+    unsigned char flags = self->allocated_flags[element_div_8];
 
-    if ( ( self->allocated_flags[element_div_8] & mask_bit ) == 0 )
+    if ( ( flags & bit ) == 0 )
     {
         self->diag_multiple_deallocation_errors++;
         POOL_ABORT( "Multiple deallocation" );
     }
     else
     {
-        self->allocated_flags[element_div_8] &= mask_bit;
+        self->allocated_flags[element_div_8] = flags & mask_bit;
         --self->total_allocated_items;
         self->next_available_hint = element_num;
     }
@@ -233,11 +234,16 @@ int Pool_find_next_available_element( struct Pool *self )
                 }
             }
         }
+        else
+        {
+            r = -1;
+        }
     }
     return r;
 }
 
-#ifdef stdout
+#if defined( stdout ) && !defined( POOL_DISABLE_DIAGNOSTICS )
+
 void Pool_diagnostics( struct Pool *self, FILE *f, const char *prefix )
 {
     fprintf( f, "%selement_size                     : %d\n", prefix, self->element_size );
