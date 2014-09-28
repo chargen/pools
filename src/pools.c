@@ -77,7 +77,7 @@ void *Pools_allocate_element( struct Pools *self, size_t size )
     size_t i;
     for ( i = 0; i < self->num_pools; ++i )
     {
-        if ( size < self->pool[i].element_size )
+        if ( size <= self->pool[i].element_size )
         {
             r = Pool_allocate_element( &self->pool[i] );
             if ( r != 0 )

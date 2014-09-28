@@ -29,8 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-extern "C"
-{
+extern "C" {
 #include "pool.h"
 #include "pools.h"
 }
@@ -41,68 +40,56 @@ template <typename T>
 struct pools_allocator : public std::allocator<T>
 {
     typedef size_t size_type;
-    typedef T* pointer;
-    typedef const T* const_pointer;
+    typedef T *pointer;
+    typedef const T *const_pointer;
 
-    template<typename U>
+    template <typename U>
     struct rebind
     {
         typedef pools_allocator<U> other;
     };
 
-    pointer allocate(size_type n, const void *hint=0)
+    pointer allocate( size_type n, const void *hint = 0 )
     {
-        pointer p=0;
-        if( m_pools )
+        pointer p = 0;
+        if ( m_pools )
         {
-            p=static_cast<pointer>(Pools_allocate_element(m_pools,n));
+            p = static_cast<pointer>( Pools_allocate_element( m_pools, n * sizeof( T ) ) );
         }
         else
         {
-            p=std::allocator<T>::allocate(n, hint);
+            p = std::allocator<T>::allocate( n, hint );
         }
         return p;
     }
 
-    void deallocate(pointer p, size_type n)
+    void deallocate( pointer p, size_type n )
     {
-        if( m_pools )
+        if ( m_pools )
         {
-            Pools_deallocate_element(m_pools,p);
+            Pools_deallocate_element( m_pools, p );
         }
         else
         {
-            return std::allocator<T>::deallocate(p, n);
+            return std::allocator<T>::deallocate( p, n );
         }
-
     }
 
-    pools_allocator(Pools *pools_to_use=0) throw()
-        : std::allocator<T>()
-        , m_pools( pools_to_use )
-    {
-    }
+    pools_allocator( Pools *pools_to_use = 0 ) throw() : std::allocator<T>(), m_pools( pools_to_use ) {}
 
-    pools_allocator(const pools_allocator &a) throw()
-        : std::allocator<T>(a)
-        , m_pools(a.m_pools)
-    {
-    }
+    pools_allocator( const pools_allocator &a ) throw() : std::allocator<T>( a ), m_pools( a.m_pools ) {}
 
     template <class U>
-    pools_allocator(const pools_allocator<U> &a) throw()
-        : std::allocator<T>(a)
-        , m_pools(a.m_pools)
+    pools_allocator( const pools_allocator<U> &a ) throw()
+        : std::allocator<T>( a ), m_pools( a.m_pools )
     {
     }
 
-    ~pools_allocator() throw()
-    {
-    }
-private:
+    ~pools_allocator() throw() {}
+
+  private:
     Pools *m_pools;
 };
-
 }
 
 #endif

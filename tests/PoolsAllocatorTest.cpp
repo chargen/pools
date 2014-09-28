@@ -50,8 +50,8 @@ int main()
 {
     Pools my_pools;
     Pools_init( &my_pools, "my_pools", my_allocation, my_free );
-    //    Pools_add( &my_pools, 64, 1024 );
-    //    Pools_add( &my_pools, 256, 1024 );
+    Pools_add( &my_pools, 64, 1024 );
+    Pools_add( &my_pools, 256, 1024 );
 
     my_allocator<my_string> all( &my_pools );
 
