@@ -53,26 +53,31 @@ int main()
     Pools_add( &my_pools, 64, 1024 );
     Pools_add( &my_pools, 256, 1024 );
 
-    my_allocator<my_string> all( &my_pools );
+    my_allocator<my_string> pools1( &my_pools );
 
     {
-        my_vector v{all};
+        my_vector v{pools1};
+        v.reserve( 2 );
 
-        v.emplace_back( "one" );
-        v.push_back( "two" );
-        v.push_back( "three" );
-        v.push_back( my_string(
+        my_string x{"This is stored in a pool", pools1};
+
+        v.emplace_back( "one", pools1 );
+        v.emplace_back( "two", pools1 );
+        v.emplace_back( "three", pools1 );
+        v.emplace_back(
             "123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012"
             "3456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234"
             "56789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456"
             "789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345678"
-            "9abcdef0123456789abcdef0123456789abcdef0123456789abcdef0" ) );
-        v.push_back( "123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0" );
+            "9abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
+            pools1 );
+        v.emplace_back( "123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0", pools1 );
 
         for ( auto i = begin( v ); i != end( v ); ++i )
         {
             std::cout << *i << std::endl;
         }
+        std::cout << x << std::endl;
         Pools_diagnostics( &my_pools, "", my_print );
     }
     Pools_diagnostics( &my_pools, "", my_print );

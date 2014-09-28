@@ -75,7 +75,7 @@ struct pools_allocator : public std::allocator<T>
         }
     }
 
-    pools_allocator( Pools *pools_to_use = 0 ) throw() : std::allocator<T>(), m_pools( pools_to_use ) {}
+    pools_allocator( Pools *pools_to_use ) throw() : std::allocator<T>(), m_pools( pools_to_use ) {}
 
     pools_allocator( const pools_allocator &a ) throw() : std::allocator<T>( a ), m_pools( a.m_pools ) {}
 
@@ -87,7 +87,6 @@ struct pools_allocator : public std::allocator<T>
 
     ~pools_allocator() throw() {}
 
-  private:
     Pools *m_pools;
 };
 }
