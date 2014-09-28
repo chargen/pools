@@ -30,31 +30,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct Pools my_pools;
 
-void *my_low_level_allocation( int sz )
-{
-    return malloc( (size_t)sz );
-}
+void *my_low_level_allocation( size_t sz ) { return malloc( (size_t)sz ); }
 
-void my_low_level_free( void *p )
-{
-    free( p );
-}
+void my_low_level_free( void *p ) { free( p ); }
 
 #define EXERCISE_POOL_COUNT ( 32768 )
 void exercise_pool()
 {
     void *ptrs[EXERCISE_POOL_COUNT];
-    int max_ptrs = EXERCISE_POOL_COUNT;
-    int i;
+    size_t max_ptrs = EXERCISE_POOL_COUNT;
+    size_t i;
 
     for ( i = 0; i < max_ptrs; ++i )
     {
-        int sz = random() % 7000;
+        size_t sz = random() % 7000;
         ptrs[i] = Pools_allocate_element( &my_pools, sz );
     }
 
 #if !defined( POOL_DISABLE_DIAGNOSTICS )
-    Pools_diagnostics( &my_pools, stdout, "allocated" );
+    Pools_diagnostics( &my_pools, "allocated", puts );
 #endif
 
     for ( i = 0; i < max_ptrs; ++i )
@@ -63,14 +57,14 @@ void exercise_pool()
     }
 
 #if !defined( POOL_DISABLE_DIAGNOSTICS )
-    Pools_diagnostics( &my_pools, stdout, "freed    " );
+    Pools_diagnostics( &my_pools, "freed    ", puts );
 #endif
 }
 
 int main()
 {
     int r = 255;
-    if ( Pools_init( &my_pools, my_low_level_allocation, my_low_level_free ) == 0 )
+    if ( Pools_init( &my_pools, "my_pools", my_low_level_allocation, my_low_level_free ) == 0 )
     {
         r = 0;
         if ( Pools_add( &my_pools, 64, 1024 ) )

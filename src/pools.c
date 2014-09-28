@@ -28,10 +28,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pools.h"
 
 int Pools_init( struct Pools *self,
-                void *( *low_level_allocation_function )( int ),
+                const char *name,
+                void *( *low_level_allocation_function )( size_t ),
                 void ( *low_level_free_function )( void * ) )
 {
     int r = -1;
+    self->name = name;
     self->low_level_allocation_function = low_level_allocation_function;
     self->low_level_free_function = low_level_free_function;
     self->diag_num_frees_from_heap = 0;
@@ -42,7 +44,7 @@ int Pools_init( struct Pools *self,
     return r;
 }
 
-int Pools_add( struct Pools *self, int element_size, int number_of_elements )
+int Pools_add( struct Pools *self, size_t element_size, size_t number_of_elements )
 {
     int r = -1;
     if ( self->num_pools < POOLS_MAX_POOLS )
@@ -60,7 +62,7 @@ int Pools_add( struct Pools *self, int element_size, int number_of_elements )
 
 void Pools_terminate( struct Pools *self )
 {
-    int n;
+    size_t n;
     for ( n = 0; n < self->num_pools; ++n )
     {
         Pool_terminate( &self->pool[n] );
@@ -69,10 +71,10 @@ void Pools_terminate( struct Pools *self )
     self->low_level_free_function = 0;
 }
 
-void *Pools_allocate_element( struct Pools *self, int size )
+void *Pools_allocate_element( struct Pools *self, size_t size )
 {
     void *r = 0;
-    int i;
+    size_t i;
     for ( i = 0; i < self->num_pools; ++i )
     {
         if ( size < self->pool[i].element_size )
@@ -98,7 +100,7 @@ void *Pools_allocate_element( struct Pools *self, int size )
 
 void Pools_deallocate_element( struct Pools *self, void *p )
 {
-    int i;
+    size_t i;
     int deallocated = 0;
     if ( p )
     {
@@ -120,21 +122,28 @@ void Pools_deallocate_element( struct Pools *self, void *p )
 }
 
 #if defined( stdout ) && !defined( POOL_DISABLE_DIAGNOSTICS )
-void Pools_diagnostics( struct Pools *self, FILE *f, const char *prefix )
+void Pools_diagnostics( struct Pools *self, const char *prefix, int ( *print )( const char * ) )
 {
-    int i;
-    int total_items_still_allocated = 0;
+    size_t i;
+    size_t total_items_still_allocated = 0;
+    print( self->name );
     for ( i = 0; i < self->num_pools; ++i )
     {
         char newprefix[128];
-        sprintf( newprefix, "%s:%2d:[%6d]:", prefix, i, self->pool[i].element_size );
-        Pool_diagnostics( &self->pool[i], f, newprefix );
+        sprintf( newprefix, "%s:%2zu:[%6zu]:", prefix, i, self->pool[i].element_size );
+        Pool_diagnostics( &self->pool[i], newprefix, print );
         total_items_still_allocated += self->pool[i].total_allocated_items;
     }
-    fprintf( f, "%s:summary:total_items_still_allocated :%d\n", prefix, total_items_still_allocated );
-    fprintf( f, "%s:summary:diag_num_frees_from_heap    :%d\n", prefix, self->diag_num_frees_from_heap );
-    fprintf( f, "%s:summary:diag_num_spills_handled     :%d\n", prefix, self->diag_num_spills_handled );
-    fprintf( f, "%s:summary:diag_num_spills_to_heap     :%d\n\n", prefix, self->diag_num_spills_to_heap );
+    char buf[128];
+    sprintf( buf, "%s:summary:total_items_still_allocated :%zu", prefix, total_items_still_allocated );
+    print( buf );
+    sprintf( buf, "%s:summary:diag_num_frees_from_heap    :%zu", prefix, self->diag_num_frees_from_heap );
+    print( buf );
+    sprintf( buf, "%s:summary:diag_num_spills_handled     :%zu", prefix, self->diag_num_spills_handled );
+    print( buf );
+    sprintf( buf, "%s:summary:diag_num_spills_to_heap     :%zu", prefix, self->diag_num_spills_to_heap );
+    print( buf );
+    print( "" );
 }
 
 #endif

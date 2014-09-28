@@ -50,27 +50,27 @@ struct Pool
     /**
      * @brief num_elements The number of elements in this pool
      */
-    int num_elements;
+    size_t num_elements;
 
     /**
      * @brief element_size The size in bytes of each element
      */
-    int element_size;
+    size_t element_size;
 
     /**
      * @brief next_available_hint The best guess of the next available element
      */
-    int next_available_hint;
+    size_t next_available_hint;
 
     /**
      * @brief element_storage_size The total size in bytes of the element_storage buffer
      */
-    int element_storage_size;
+    size_t element_storage_size;
 
     /**
      * @brief total_allocated_items The total number of items that are currently allocated
      */
-    int total_allocated_items;
+    size_t total_allocated_items;
 
     /**
      * @brief allocated_flags The storage for the bit map of allocated/deallocated flags. One bit per element
@@ -85,34 +85,34 @@ struct Pool
     /**
      * @brief diag_num_allocations Diagnostics counter for the number of allocations
      */
-    int diag_num_allocations;
+    size_t diag_num_allocations;
 
     /**
      * @brief diag_num_frees Diagnostics counter for the number of frees
      */
-    int diag_num_frees;
+    size_t diag_num_frees;
 
     /**
      * @brief diag_num_spills Diagnostics counter for the number of spills : allocations that had to be pushed to a larger pool
      */
-    int diag_num_spills;
+    size_t diag_num_spills;
 
     /**
      * @brief diag_multiple_allocation_errors Diagnostics counter for the number of times an element was allocated more than
      * once at a time
      */
-    int diag_multiple_allocation_errors;
+    size_t diag_multiple_allocation_errors;
 
     /**
      * @brief diag_multiple_deallocation_errors Diagnostics counter for the number of times an element was deallocated more than
      * once at a time
      */
-    int diag_multiple_deallocation_errors;
+    size_t diag_multiple_deallocation_errors;
 
     /**
      * @brief low_level_allocation_function the pointer to the system's low level allocation function
      */
-    void *( *low_level_allocation_function )( int );
+    void *( *low_level_allocation_function )( size_t );
 
     /**
      * @brief low_level_free_function The pointer to the system's low level free dunction
@@ -130,9 +130,9 @@ struct Pool
  * @return                              -1 on error, 0 on success
  */
 int Pool_init( struct Pool *self,
-               int num_elements,
-               int element_size,
-               void *( *low_level_allocation_function )( int ),
+               size_t num_elements,
+               size_t element_size,
+               void *( *low_level_allocation_function )( size_t ),
                void ( *low_level_free_function )( void * ) );
 
 /**
@@ -162,21 +162,21 @@ int Pool_deallocate_element( struct Pool *self, void *p );
  * @param element_num               The element index to check
  * @return                          1 if the element is available, 0 otherwise.
  */
-int Pool_is_element_available( struct Pool *self, int element_num );
+int Pool_is_element_available( struct Pool *self, size_t element_num );
 
 /**
  * @brief Pool_mark_element_allocated   Mark the specified element as allocated
  * @param self                          The Pool to use
  * @param element_num                   The element index to mark as allocated
  */
-void Pool_mark_element_allocated( struct Pool *self, int element_num );
+void Pool_mark_element_allocated( struct Pool *self, size_t element_num );
 
 /**
  * @brief Pool_mark_element_available   Mark the specified element as available
  * @param self                          The Pool to use
  * @param element_num                   The element index to mark as available
  */
-void Pool_mark_element_available( struct Pool *self, int element_num );
+void Pool_mark_element_available( struct Pool *self, size_t element_num );
 
 /**
  * @brief Pool_get_address_for_element  Calculate the memory address of a specific element
@@ -184,7 +184,7 @@ void Pool_mark_element_available( struct Pool *self, int element_num );
  * @param element_num                   The element index to use
  * @return                              Pointer to the element, or 0 if the element_num is out of range
  */
-void *Pool_get_address_for_element( struct Pool *self, int element_num );
+void *Pool_get_address_for_element( struct Pool *self, size_t element_num );
 
 /**
  * @brief Pool_is_address_in_pool       Calculate if the specified address points to an element in this Pool
@@ -201,17 +201,17 @@ int Pool_is_address_in_pool( struct Pool *self, void const *p );
  * @return                              The element number, or -1 if the pointer is not pointing to the beginning of an element
  * in this Pool
  */
-int Pool_get_element_for_address( struct Pool *self, void const *p );
-int Pool_find_next_available_element( struct Pool *self );
+ssize_t Pool_get_element_for_address( struct Pool *self, void const *p );
+ssize_t Pool_find_next_available_element( struct Pool *self );
 
 #if defined( stdout ) && !defined( POOL_DISABLE_DIAGNOSTICS )
 /**
  * @brief Pool_diagnostics          Print pool diagnostics counters
  * @param self                      Pointer to Pool struct to diagnose
- * @param f                         Pointer to FILE to print to
  * @param prefix                    Pointer to cstring which will be put in front of each line outputted
+ * @param print                     Pointer to function to be called for each line of text
  */
-void Pool_diagnostics( struct Pool *self, FILE *f, const char *prefix );
+void Pool_diagnostics( struct Pool *self, const char *prefix, int ( *print )( const char * ) );
 #endif
 
 #endif

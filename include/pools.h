@@ -36,7 +36,7 @@ struct Pools
     /**
      * @brief num_pools The current number of pools
      */
-    int num_pools;
+    size_t num_pools;
 
     /**
      * @brief pool The array of pools.
@@ -46,7 +46,7 @@ struct Pools
     /**
      * @brief low_level_allocation_function the pointer to the system's low level allocation function
      */
-    void *( *low_level_allocation_function )( int );
+    void *( *low_level_allocation_function )( size_t );
 
     /**
      * @brief low_level_free_function The pointer to the system's low level free dunction
@@ -56,30 +56,37 @@ struct Pools
     /**
      * @brief diag_num_spills_handled Diagnostics counter of the number of spills that happened but were handled by another Pool
      */
-    int diag_num_spills_handled;
+    size_t diag_num_spills_handled;
 
     /**
      * @brief diag_num_spills_to_heap Diagnostics counter of the number of spills that happened that had to be handled by the
      * system heap
      */
-    int diag_num_spills_to_heap;
+    size_t diag_num_spills_to_heap;
 
     /**
      * @brief diag_num_frees_from_heap Diagnostics counter of the number of frees of objects that were allocated on the heap
      * because of a spill
      */
-    int diag_num_frees_from_heap;
+    size_t diag_num_frees_from_heap;
+
+    /**
+     * @brief name The name of this collection of Pools
+     */
+    const char *name;
 };
 
 /**
  * @brief Pools_init                    Initialize a Pools structure, a set of POOLS_MAX_POOLS pools
  * @param self                          Pointer to Pools struct to init
+ * @param name                          Pointer to string of name of this collection of pools
  * @param low_level_allocation_function Pointer to low level memory allocation function
  * @param low_level_free_function       Pointer to low level memory free function
  * @return                              -1 on error, 0 on success
  */
 int Pools_init( struct Pools *self,
-                void *( *low_level_allocation_function )( int ),
+                const char *name,
+                void *( *low_level_allocation_function )( size_t ),
                 void ( *low_level_free_function )( void * ) );
 
 /**
@@ -89,7 +96,7 @@ int Pools_init( struct Pools *self,
  * @param num_elements                  The number of elements for this new pool
  * @return                              -1 on error, 0 on success
  */
-int Pools_add( struct Pools *self, int element_size, int number_of_elements );
+int Pools_add( struct Pools *self, size_t element_size, size_t number_of_elements );
 
 /**
  * @brief Pools_terminate           Terminate a Pools and deallocate low level buffers used by all
@@ -105,7 +112,7 @@ void Pools_terminate( struct Pools *self );
  * @param size                      Size of the item to allocate
  * @return                          pointer to allocated item, or 0 on error
  */
-void *Pools_allocate_element( struct Pools *self, int size );
+void *Pools_allocate_element( struct Pools *self, size_t size );
 
 /**
  * @brief Pools_deallocate_element  Find the pool that a pointer was allocated from and do the appropriate thing to de-allocate
@@ -117,12 +124,12 @@ void Pools_deallocate_element( struct Pools *self, void *p );
 
 #if defined( stdout ) && !defined( POOL_DISABLE_DIAGNOSTICS )
 /**
- * @brief Pools_diagnostics         Print Pools diagnostics counters
- * @param self                      Pointer to Pools struct to diagnose
- * @param f                         Pointer to FILE to print to
+ * @brief Pools_diagnostics          Print pool diagnostics counters
+ * @param self                      Pointer to Pool struct to diagnose
  * @param prefix                    Pointer to cstring which will be put in front of each line outputted
+ * @param print                     Pointer to function to be called for each line of text
  */
-void Pools_diagnostics( struct Pools *self, FILE *f, const char *prefix );
+void Pools_diagnostics( struct Pools *self, const char *prefix, int ( *print )( const char * ) );
 #endif
 
 #endif
