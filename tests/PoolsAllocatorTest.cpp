@@ -44,13 +44,25 @@ int main()
 {
     Pools my_pools;
     Pools_init( &my_pools,my_allocation, my_free );
-    Pools_add(&my_pools,128,1024);
+    Pools_add(&my_pools,32,1024);
     Pools_add(&my_pools,256,1024);
 
     PoolsAllocator::pools_allocator<std::string> all(&my_pools);
 
-    std::vector< std::string, PoolsAllocator::pools_allocator< std::string > > v;
+    {
+        std::vector< std::string, PoolsAllocator::pools_allocator< std::string > > v{ all };
 
+        v.push_back("one");
+        v.push_back("two");
+        v.push_back("three");
+        v.push_back("123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0");
+        v.push_back("123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0");
+
+        for( auto i = begin(v); i!=end(v); ++i )
+        {
+            std::cout << *i << std::endl;
+        }
+    }
     Pools_diagnostics(&my_pools,stdout,"");
     Pools_terminate(&my_pools);
 }

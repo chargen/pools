@@ -2,19 +2,17 @@ cmake_minimum_required (VERSION 2.8)
 project (${PROJECT})
 enable_testing()
 
-INCLUDE (CPack)
-INCLUDE (CTest)
-
 option(TODO "Enable TODO items that are in progress" OFF)
 option(TESTS "Enable building of extended test code in library" ON)
 option(EXAMPLES "Enable building of example programs" ON)
 option(TOOLS "Enable building of tools" ON)
 option(TOOLS_DEV "Enable building of tools-dev" ON)
 
-if(CMAKE_MAKE_PROGRAM MATCHES "(msdev|devenv|nmake|MSBuild)")
+if(CMAKE_BUILD_TOOL MATCHES "(msdev|devenv|nmake|MSBuild)")
     add_definitions("/W2")
 else()
     add_definitions("-Wall -Wextra")
+    set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++11 -stdlib=libc++")    
 endif()
 
 if(TODO MATCHES "ON")

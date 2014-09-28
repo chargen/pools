@@ -52,15 +52,16 @@ struct pools_allocator : public std::allocator<T>
 
     pointer allocate(size_type n, const void *hint=0)
     {
-        pointer *p=0;
+        pointer p=0;
         if( m_pools )
         {
-            p=Pools_allocate_element(m_pools,n);
+            p=static_cast<pointer>(Pools_allocate_element(m_pools,n));
         }
         else
         {
             p=std::allocator<T>::allocate(n, hint);
         }
+        return p;
     }
 
     void deallocate(pointer p, size_type n)
