@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <iostream>
 
+#if __cplusplus >= 199711L
 #include "PoolsAllocator.hpp"
 
 void *my_allocation( size_t sz ) { return malloc( sz ); }
@@ -84,3 +85,10 @@ int main()
 
     Pools_terminate( &my_pools );
 }
+#else
+main()
+{
+    printf("c++11 not enabled\n");
+    return 0;
+}
+
