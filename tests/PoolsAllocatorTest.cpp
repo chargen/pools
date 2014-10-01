@@ -88,7 +88,7 @@ int main()
 #else
 int main()
 {
-    printf("c++11 not enabled\n");
+    std::cout << "c++11 not enabled" << std::endl;
     return 0;
 }
 #endif
