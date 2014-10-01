@@ -34,6 +34,8 @@ extern "C" {
 #include "pools.h"
 }
 
+#if __cplusplus > 199711L
+
 namespace PoolsAllocator
 {
 template <typename T>
@@ -90,5 +92,6 @@ struct pools_allocator : public std::allocator<T>
     Pools *m_pools;
 };
 }
+#endif
 
 #endif
