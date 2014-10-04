@@ -154,7 +154,7 @@ void *Pool_allocate_element( struct Pool *self );
  * @param p                         The pointer to deallocate
  * @return                          -1 if the item is not allocated from this pool, or the item index if positive
  */
-int Pool_deallocate_element( struct Pool *self, void *p );
+ssize_t Pool_deallocate_element( struct Pool *self, void *p );
 
 /**
  * @brief Pool_is_element_available Check to see if a specific element index is available

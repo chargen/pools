@@ -110,7 +110,7 @@ void *Pool_allocate_element( struct Pool *self )
     return r;
 }
 
-int Pool_deallocate_element( struct Pool *self, void *p )
+ssize_t Pool_deallocate_element( struct Pool *self, void *p )
 {
     if ( self->num_elements > 0 )
     {
@@ -249,7 +249,7 @@ ssize_t Pool_find_next_available_element( struct Pool *self )
             size_t i;
             for ( i = 0; i < self->num_elements; ++i )
             {
-                int item = ( pos + i ) % self->num_elements;
+                ssize_t item = ( pos + i ) % self->num_elements;
                 if ( Pool_is_element_available( self, item ) )
                 {
                     r = item;
