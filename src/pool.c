@@ -245,8 +245,9 @@ ssize_t Pool_find_next_available_element( struct Pool *self )
     {
         if ( self->total_allocated_items < self->num_elements )
         {
+            size_t i;
             size_t pos = self->next_available_hint;
-            for ( size_t i = 0; i < self->num_elements; ++i )
+            for ( i = 0; i < self->num_elements; ++i )
             {
                 int item = ( pos + i ) % self->num_elements;
                 if ( Pool_is_element_available( self, item ) )
