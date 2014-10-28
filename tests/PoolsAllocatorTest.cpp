@@ -28,6 +28,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <iostream>
 
+#if __cplusplus >= 201103L
+
 #include "PoolsAllocator.hpp"
 
 void *my_allocation( size_t sz ) { return malloc( sz ); }
@@ -84,3 +86,11 @@ int main()
 
     Pools_terminate( &my_pools );
 }
+#else
+int main()
+{
+    std::cout << "test requires c++11" << std::endl;
+    return 0;
+}
+#endif
+
